@@ -37,6 +37,7 @@
     "dist",
     "integrations",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "sideEffects": [
