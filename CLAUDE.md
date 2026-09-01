@@ -27,6 +27,11 @@ npx playwright test -g 'rise brings characters home'
 `npm run build` is a prerequisite for `test:browser`: the Playwright fixture is
 `demo/index.html`, which is generated and gitignored.
 
+The test port is 4517, not Vite's 4173. Playwright reuses whatever already
+answers on the port, so a forgotten server from a sibling repo would silently
+serve its own pages. The readiness check hits `dist/split-reveal.css` for that
+reason: a foreign server 404s there and the port clash fails loudly instead.
+
 ## Architecture
 
 The library is a build-time text splitter plus a stylesheet. No JavaScript from
@@ -57,6 +62,11 @@ in `splitText`, never hand-written, which is what keeps a short headline and a
 long paragraph finishing over the same share of their own scroll. Changing this
 to a delay would silently break the whole effect.
 
+To debug a range, read the progress an element actually reaches:
+`document.querySelector('.split-char').getAnimations()[0].timeline.currentTime.value`
+gives the cover progress in percent. Compare it against `end + spread`, the point
+where the last character lands.
+
 ### Deliberate details that look like mistakes
 
 - **No object spread for options.** `splitText` copies defaults and skips
@@ -77,6 +87,8 @@ to a delay would silently break the whole effect.
   `end + spread` percent of the viewport (72% for the last demo section) or its
   closing characters never arrive. Guarded by the browser test
   `every block finishes by the end of the page`.
+- **The README's CDN URLs pin `@0`, not an exact version.** The no-build section
+  would otherwise need an edit in every release.
 
 ### Generated and committed files
 
@@ -102,10 +114,15 @@ to a delay would silently break the whole effect.
 - Accessibility invariants have tests: the split copy stays `aria-hidden`, the
   original string stays in `.split-a11y`, and nothing animates under
   `prefers-reduced-motion: reduce`.
+- Browser tests run against the generated demo. A count of "still broken"
+  elements passes on a page that has none, so assert the fixture was found
+  before asserting that nothing is wrong with it.
 
 ## Release
 
 Tag `vX.Y.Z` matching `package.json`; `release.yml` publishes via npm OIDC
-trusted publishing (no token). The workflow fails if tag and version disagree,
+trusted publishing (no token; the publisher is configured, nothing manual is
+left). Bump with `npm version X.Y.Z --no-git-tag-version` so `package-lock.json`
+moves with it. The workflow fails if tag and version disagree,
 and skips publishing a version already on the registry. Update `CHANGELOG.md`
 (Keep a Changelog format) as part of the change, not afterwards.
