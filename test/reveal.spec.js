@@ -94,15 +94,23 @@ test.describe('scroll-linked reveal', () => {
         );
       });
 
-      const unrevealed = await page.evaluate(() =>
-        [...document.querySelectorAll('.split-char')].filter((c) => {
-          const style = getComputedStyle(c);
-          const lifted =
-            style.transform !== 'none' && new DOMMatrix(style.transform).m42 > 0.5;
-          return Number(style.opacity) < 0.99 || lifted;
-        }).length,
-      );
+      const { total, unrevealed } = await page.evaluate(() => {
+        const chars = [...document.querySelectorAll('.split-char')];
+        return {
+          total: chars.length,
+          unrevealed: chars.filter((c) => {
+            const style = getComputedStyle(c);
+            const lifted =
+              style.transform !== 'none' && new DOMMatrix(style.transform).m42 > 0.5;
+            return Number(style.opacity) < 0.99 || lifted;
+          }).length,
+        };
+      });
 
+      // Counting what is still hidden passes trivially on a page with no
+      // characters at all, which is what a foreign server on the port serves
+      // up when Playwright reuses it. Assert the fixture is really there.
+      expect(total, `characters found at ${height}px tall`).toBeGreaterThan(0);
       expect(unrevealed, `unrevealed characters at ${height}px tall`).toBe(0);
     }
   });
