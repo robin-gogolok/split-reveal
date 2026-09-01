@@ -1,0 +1,18 @@
+{
+  // Checks the shipped declarations the way a consumer meets them: the imports
+  // below use the package's own name, so they resolve through the `exports`
+  // map in package.json rather than reaching into dist/ by path. A missing
+  // `types` condition therefore fails here, which is the mistake that is
+  // otherwise only visible after publishing.
+  "compilerOptions": {
+    "noEmit": true,
+    "strict": true,
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2022", "dom"],
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["usage.ts"]
+}

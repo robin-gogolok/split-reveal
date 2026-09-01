@@ -25,6 +25,39 @@
  *   paragraph both complete over the same share of their own scroll.
  */
 
+/**
+ * @typedef {object} SplitChar
+ * @property {string} value One grapheme cluster.
+ * @property {number} index Position across the whole string, not within the word.
+ *   This is `--split-i`, so it is the character's place in the stagger.
+ */
+
+/**
+ * @typedef {object} SplitWordToken
+ * @property {'word'} type
+ * @property {string} value The word as written.
+ * @property {SplitChar[]} chars
+ */
+
+/**
+ * @typedef {object} SplitSpaceToken
+ * @property {'space'} type
+ * @property {string} value
+ */
+
+/**
+ * A run of copy is a flat list of these. Narrow on `type` before reaching for
+ * `chars`; the space tokens carry none and exist to keep the line-break
+ * opportunities where untouched text would have them.
+ *
+ * @typedef {SplitWordToken | SplitSpaceToken} SplitToken
+ */
+
+/** @typedef {{'data-split-reveal': SplitMode, style: string}} SplitAttributes */
+
+/** @typedef {Record<string, string | number | boolean | null | undefined>} ElementAttributes */
+
+/** @type {Readonly<Required<SplitOptions>>} */
 const DEFAULTS = Object.freeze({
   mode: 'rise',
   start: 8,
@@ -74,7 +107,7 @@ function escapeAttribute(value) {
 }
 
 /**
- * @param {Record<string, string | number | boolean | null | undefined>} attrs
+ * @param {ElementAttributes} attrs
  * @returns {string}
  */
 function renderAttributes(attrs) {
@@ -100,9 +133,13 @@ export function splitText(text, options = {}) {
   // every framework wrapper hands us `undefined` for props the caller left
   // out. Skipping them is what makes `splitText(text, { start: undefined })`
   // mean "use the default" rather than "use NaN".
+  // The cast is only about the write: a string key cannot index a typed
+  // object, and narrowing it to `keyof SplitOptions` would make the value a
+  // union that fits none of the slots. `config` keeps its type for the
+  // destructure below, which is where it matters.
   const config = { ...DEFAULTS };
   for (const [key, value] of Object.entries(options)) {
-    if (value !== undefined) config[key] = value;
+    if (value !== undefined) /** @type {Record<string, unknown>} */ (config)[key] = value;
   }
   const { mode, start, end, spread } = config;
 
@@ -138,13 +175,16 @@ export function splitText(text, options = {}) {
  * templates call `toHTML()` or `toElement()`.
  */
 export class SplitResult {
-  /** @param {object} init */
+  /**
+   * @param {{text: string, mode: SplitMode, tokens: SplitToken[], count: number,
+   *   start: number, end: number, step: number}} init
+   */
   constructor(init) {
     /** @type {string} The untouched input. */
     this.text = init.text;
     /** @type {SplitMode} */
     this.mode = init.mode;
-    /** @type {Array<{type: 'word', value: string, chars: Array<{value: string, index: number}>} | {type: 'space', value: string}>} */
+    /** @type {SplitToken[]} Word and whitespace tokens, in reading order. */
     this.tokens = init.tokens;
     /** @type {number} Number of characters, across all words. */
     this.count = init.count;
@@ -158,7 +198,7 @@ export class SplitResult {
 
   /**
    * Attributes for the element that wraps the split copy.
-   * @returns {{'data-split-reveal': SplitMode, style: string}}
+   * @returns {SplitAttributes}
    */
   get attributes() {
     return {
@@ -198,7 +238,7 @@ export class SplitResult {
    * The complete element, attributes included.
    *
    * @param {string} [tag='span']
-   * @param {Record<string, string | number | boolean | null | undefined>} [attrs]
+   * @param {ElementAttributes} [attrs]
    * @returns {string}
    */
   toElement(tag = 'span', attrs = {}) {

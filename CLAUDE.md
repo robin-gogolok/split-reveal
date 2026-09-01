@@ -9,9 +9,10 @@ public repository. Keep it to architecture and commands.
 ## Commands
 
 ```sh
-npm run build          # minify src/ CSS into dist/, then generate demo/index.html
-npm test               # unit + browser
+npm run build          # minify src/ CSS into dist/, emit dist/types/, generate demo/index.html
+npm test               # unit + types + browser
 npm run test:unit      # node --test test/*.test.js
+npm run test:types     # tsc -p test/types/tsconfig.json
 npm run test:browser   # playwright; starts scripts/serve.js on :4517 itself
 npm run serve          # static server on :4517, serves the repo root
 ```
@@ -23,6 +24,10 @@ node --test test/split.test.js
 node --test --test-name-pattern='counts characters' test/split.test.js
 npx playwright test -g 'rise brings characters home'
 ```
+
+`test:types` needs `npm run build` first: it compiles `test/types/usage.ts`,
+which imports `split-reveal` by name and so resolves through the `exports` map
+into `dist/types/`.
 
 `npm run build` is a prerequisite for `test:browser`: the Playwright fixture is
 `demo/index.html`, which is generated and gitignored.
@@ -43,7 +48,9 @@ opt-in `src/fallback.js`.
 `src/split.js` emits markup and custom properties that `src/split-reveal.css`
 consumes. Nothing enforces this coupling, so a rename in one file must be
 mirrored in the other, in `integrations/astro/SplitReveal.astro`, and in the
-README's React example:
+README's React example. Only the *option names* are enforced now, because the
+Astro props extend `SplitOptions`; class names and custom properties are still
+strings on both sides and drift silently:
 
 | Emitted by `split.js` | Consumed by `split-reveal.css` |
 |---|---|
@@ -72,6 +79,14 @@ where the last character lands.
 - **No object spread for options.** `splitText` copies defaults and skips
   `undefined` values in a loop, because framework wrappers pass every prop
   through whether set or not. Test: `treats an explicit undefined option as absent`.
+  The `Record<string, unknown>` cast on the assignment is what makes that loop
+  survive `checkJs`; narrowing the key to `keyof SplitOptions` instead widens
+  the value to a union that fits no slot.
+- **`typesVersions` in `package.json`.** The `exports` map already carries a
+  `types` condition, but the legacy `moduleResolution: node` setting ignores
+  `exports` entirely, so `split-reveal/fallback` resolves to no types there.
+  The top-level `types` field covers the root import; `typesVersions` covers
+  the subpath.
 - **No whitespace between the two spans in `toHTML()`.** The split copy is
   absolutely positioned; a text node beside it renders as a leading indent.
 - **`clip-path`, not `overflow: hidden`, on `.split-word`.** An overflowing
@@ -92,10 +107,14 @@ where the last character lands.
 
 ### Generated and committed files
 
-- `dist/split-reveal.css` is **committed** so the package installs straight from
-  git. The `dist-is-current` CI job runs `git diff --exit-code -- dist/`, so any
-  edit to `src/split-reveal.css` must be followed by `npm run build` and a commit
-  of `dist/`.
+- `dist/split-reveal.css` and `dist/types/*.d.ts` are **committed** so the
+  package installs straight from git. The `dist-is-current` CI job runs
+  `git diff --exit-code -- dist/`, so any edit to `src/split-reveal.css` or to
+  a JSDoc annotation must be followed by `npm run build` and a commit of
+  `dist/`.
+- `dist/types/` is generated from the JSDoc by `scripts/build-types.js`, which
+  wipes the directory first so a deleted export cannot leave a stale
+  declaration that the CI job would then happily keep.
 - `demo/index.html` and `demo/split-reveal.css` are gitignored build output.
   `demo/build.js` renders the demo through the public API, so it doubles as the
   integration test for `splitText`. Add new API surface to a demo section and it
@@ -103,8 +122,12 @@ where the last character lands.
 
 ## Conventions
 
-- Node ESM, no TypeScript. Types are JSDoc; keep the annotations current since
-  they are the only type surface consumers get.
+- Node ESM, no TypeScript source. The JSDoc in `src/` is the only type source:
+  `tsconfig.json` has `checkJs` on, so a wrong annotation fails `npm run build`,
+  and `tsc` reads the same annotations back out into `dist/types/`. Never
+  hand-edit a `.d.ts`; fix the JSDoc and rebuild.
+- Every `@typedef` in `src/split.js` becomes an exported type, so naming one is
+  a public API decision. Renaming or removing one is a breaking change.
 - Zero runtime dependencies is a hard constraint, not a preference. `esbuild` and
   `@playwright/test` are dev-only.
 - All CSS lives inside `@layer split-reveal`, so consumer CSS wins without

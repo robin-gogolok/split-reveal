@@ -8,6 +8,25 @@ While the version is below `1.0.0` the API may still change in a minor release.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-01
+
+### Added
+
+- TypeScript declarations. They are generated from the JSDoc in `src/` into
+  `dist/types/` and committed next to `dist/split-reveal.css`, so the types are
+  there whether the package comes from npm or straight from git. `SplitMode`,
+  `SplitOptions`, `SplitChar`, `SplitWordToken`, `SplitSpaceToken`,
+  `SplitToken`, `SplitAttributes` and `ElementAttributes` are exported as types
+  alongside the `SplitResult` class, and the token tree is a discriminated
+  union, so narrowing on `type` is what hands you `chars`.
+- Resolution is covered under `nodenext`, `bundler` and the legacy `node`
+  setting, the last one through `typesVersions` for the `fallback` subpath.
+
+### Changed
+
+- The Astro component's `Props` extends `SplitOptions` rather than restating
+  `mode`, `start`, `end` and `spread`, so the two cannot drift apart.
+
 ## [0.1.1] - 2026-09-01
 
 ### Added
@@ -59,6 +78,7 @@ First release.
   use `fade`.
 - Firefox does not ship `animation-timeline: view()` yet. See the README.
 
-[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/robin-gogolok/split-reveal/releases/tag/v0.1.0

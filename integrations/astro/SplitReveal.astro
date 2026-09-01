@@ -6,16 +6,15 @@
  * Import the stylesheet once in your layout:
  *   import 'split-reveal/css'
  */
-import { splitText } from 'split-reveal';
+import { splitText, type SplitOptions } from 'split-reveal';
 
-interface Props {
+// Extending SplitOptions rather than restating it: `mode`, `start`, `end` and
+// `spread` then follow the library's own type, so a new option cannot arrive
+// here as a silently untyped prop.
+interface Props extends SplitOptions {
   text: string;
-  mode?: 'rise' | 'fade';
   as?: 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
   class?: string;
-  start?: number;
-  end?: number;
-  spread?: number;
 }
 
 const { text, mode, as = 'span', class: className, start, end, spread } = Astro.props;

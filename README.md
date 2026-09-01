@@ -153,10 +153,35 @@ Returns a `SplitResult`:
 |---|---|---|
 | `text` | `string` | The untouched input |
 | `count` | `number` | Number of characters |
-| `tokens` | `array` | Word and whitespace tokens, each word carrying its characters and their running index |
-| `attributes` | `object` | `data-split-reveal` and the `style` string for the wrapping element |
+| `tokens` | `SplitToken[]` | Word and whitespace tokens, each word carrying its characters and their running index |
+| `attributes` | `SplitAttributes` | `data-split-reveal` and the `style` string for the wrapping element |
 | `toHTML()` | `string` | Inner markup: hidden original plus the `aria-hidden` split copy |
 | `toElement(tag?, attrs?)` | `string` | The complete element |
+
+### TypeScript
+
+Declarations ship with the package, so there is nothing to install and no
+`@types/` counterpart. They are generated from the JSDoc in `src/`, which keeps
+them from drifting away from the implementation.
+
+`tokens` is a discriminated union. Narrowing on `type` is what hands you
+`chars`, because whitespace tokens do not carry any:
+
+```ts
+import { splitText } from 'split-reveal'
+import type { SplitToken } from 'split-reveal'
+
+function longestWord(tokens: SplitToken[]): number {
+  return tokens.reduce((n, t) => (t.type === 'word' ? Math.max(n, t.chars.length) : n), 0)
+}
+
+longestWord(splitText('Scroll is the timeline.').tokens)
+```
+
+Exported types: `SplitMode`, `SplitOptions`, `SplitChar`, `SplitWordToken`,
+`SplitSpaceToken`, `SplitToken`, `SplitAttributes` and `ElementAttributes`,
+plus the `SplitResult` class. The Astro component's props extend
+`SplitOptions`, so `mode`, `start`, `end` and `spread` are typed there too.
 
 ### Why `spread` and not a delay
 

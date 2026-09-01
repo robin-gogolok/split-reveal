@@ -24,8 +24,26 @@ jobs:
       - run: npm run build
       - run: npm run test:unit
 
+  # The .d.ts files are generated from the JSDoc in src/, so this job is really
+  # two checks: `npm run build` fails when an annotation is wrong, and
+  # `test:types` compiles a consumer that imports the package by name, which is
+  # the only way a missing `types` condition in the exports map shows up before
+  # someone installs the published tarball.
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:types
+
   # dist/ is committed so the package can be installed straight from git,
-  # where no build ever runs. This is the guard that keeps it honest.
+  # where no build ever runs. This is the guard that keeps it honest, and it
+  # now covers dist/types/ as well.
   dist-is-current:
     runs-on: ubuntu-latest
     steps:

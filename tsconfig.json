@@ -1,0 +1,20 @@
+{
+  // The declaration build. There is no TypeScript in this repo: the JSDoc in
+  // src/ is the type source, and `tsc` only reads it back out into dist/types/.
+  // `checkJs` is on so the annotations are verified rather than decorative.
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist/types",
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "skipLibCheck": true
+  },
+  "include": ["src/split.js", "src/fallback.js"]
+}
