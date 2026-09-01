@@ -65,6 +65,16 @@ describe('splitText', () => {
     assert.equal(splitText('x').attributes['data-split-reveal'], 'rise');
   });
 
+  test('treats an explicit undefined option as absent', () => {
+    // Framework wrappers pass every prop through, set or not.
+    const result = splitText('abc', { mode: undefined, start: undefined, spread: undefined });
+    assert.equal(result.mode, defaults.mode);
+    assert.equal(result.start, defaults.start);
+    assert.ok(Number.isFinite(result.step));
+    assert.ok(!result.attributes.style.includes('undefined'));
+    assert.ok(!result.attributes.style.includes('NaN'));
+  });
+
   test('rejects unusable input instead of rendering something broken', () => {
     assert.throws(() => splitText(42), TypeError);
     assert.throws(() => splitText('x', { mode: 'slide' }), RangeError);

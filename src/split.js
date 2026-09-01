@@ -96,7 +96,15 @@ export function splitText(text, options = {}) {
     throw new TypeError(`split-reveal: expected a string, received ${typeof text}`);
   }
 
-  const { mode, start, end, spread } = { ...DEFAULTS, ...options };
+  // Object spread would let an explicit `undefined` overwrite a default, and
+  // every framework wrapper hands us `undefined` for props the caller left
+  // out. Skipping them is what makes `splitText(text, { start: undefined })`
+  // mean "use the default" rather than "use NaN".
+  const config = { ...DEFAULTS };
+  for (const [key, value] of Object.entries(options)) {
+    if (value !== undefined) config[key] = value;
+  }
+  const { mode, start, end, spread } = config;
 
   if (!MODES.has(mode)) {
     throw new RangeError(`split-reveal: unknown mode "${mode}", expected "rise" or "fade"`);
