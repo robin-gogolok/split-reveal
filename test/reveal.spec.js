@@ -46,17 +46,35 @@ test.describe('scroll-linked reveal', () => {
     expect(late).toBeGreaterThan(mid);
   });
 
-  test('fade never shows a half-transparent character', async ({ page }) => {
+  test('fade switches characters without a partial state', async ({ page }) => {
+    // Three things at once. Nothing may sit at a partial opacity, which is what
+    // returning this mode to an opacity animation would reintroduce along with
+    // the Safari repaint fault. Nothing may sit at a visibility other than the
+    // two discrete ends. And somewhere mid-scroll the reveal has to be part-way
+    // through, or the stagger is gone and every character switches on one frame.
+    let sawPartway = false;
     for (const fraction of [0.85, 0.62, 0.45, 0.2]) {
       await scrollTo(page, '#fade .lede', fraction);
-      const partial = await page.evaluate(
-        () =>
-          [...document.querySelectorAll('#fade .split-char')]
-            .map((c) => Number(getComputedStyle(c).opacity))
-            .filter((o) => o > 0.01 && o < 0.99).length,
-      );
-      expect(partial, `partial opacity at ${fraction}`).toBe(0);
+      const state = await page.evaluate(() => {
+        const styles = [...document.querySelectorAll('#fade .split-char')].map((c) =>
+          getComputedStyle(c),
+        );
+        return {
+          total: styles.length,
+          partial: styles.filter((s) => Number(s.opacity) > 0.01 && Number(s.opacity) < 0.99)
+            .length,
+          neither: styles.filter((s) => s.visibility !== 'hidden' && s.visibility !== 'visible')
+            .length,
+          shown: styles.filter((s) => s.visibility === 'visible').length,
+        };
+      });
+
+      expect(state.total, `characters found at ${fraction}`).toBeGreaterThan(0);
+      expect(state.partial, `partial opacity at ${fraction}`).toBe(0);
+      expect(state.neither, `neither hidden nor visible at ${fraction}`).toBe(0);
+      if (state.shown > 0 && state.shown < state.total) sawPartway = true;
     }
+    expect(sawPartway, 'a scroll position with the reveal part-way through').toBe(true);
   });
 
   test('splitting does not move the copy', async ({ page }) => {
@@ -102,7 +120,9 @@ test.describe('scroll-linked reveal', () => {
             const style = getComputedStyle(c);
             const lifted =
               style.transform !== 'none' && new DOMMatrix(style.transform).m42 > 0.5;
-            return Number(style.opacity) < 0.99 || lifted;
+            // fade hides with visibility, rise with transform. Miss either and
+            // this counts a half-finished block as done.
+            return style.visibility === 'hidden' || Number(style.opacity) < 0.99 || lifted;
           }).length,
         };
       });
@@ -159,7 +179,10 @@ test.describe('reduced motion', () => {
       const chars = [...document.querySelectorAll('#fade .split-char')];
       return {
         animations: chars.filter((c) => getComputedStyle(c).animationName !== 'none').length,
-        hidden: chars.filter((c) => Number(getComputedStyle(c).opacity) < 0.99).length,
+        hidden: chars.filter((c) => {
+          const style = getComputedStyle(c);
+          return Number(style.opacity) < 0.99 || style.visibility === 'hidden';
+        }).length,
       };
     });
     expect(state.animations).toBe(0);

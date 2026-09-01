@@ -44,9 +44,19 @@
     to   { transform: translateY(0); }
   }
 
+  /* `visibility`, not `opacity`. Safari does not reliably invalidate a
+     scroll-driven opacity animation across many small inline boxes: scrolling
+     back up leaves characters painted on screen that the computed style says
+     are gone, and the faster the scroll, the more of them stay. `rise` is
+     unaffected because it animates `transform`, and a single large element
+     animating opacity is fine too, so it is opacity on the split characters
+     specifically. visibility is discrete, which is what `steps(1)` asks for
+     here anyway, and it leaves colour, text-shadow and background-clip alone.
+     Guarded by the browser test `fade switches characters without a partial
+     state`. */
   @keyframes split-step {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from { visibility: hidden; }
+    to   { visibility: visible; }
   }
 
   @supports (animation-timeline: view()) {
@@ -92,7 +102,7 @@
          letters for the whole range; a single step means every character is
          either set or absent, which stays legible while scrolling. */
       [data-split-reveal="fade"] .split-char {
-        opacity: 0;
+        visibility: hidden;
         animation-name: split-step;
         animation-timing-function: steps(1, end);
       }

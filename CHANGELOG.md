@@ -8,6 +8,27 @@ While the version is below `1.0.0` the API may still change in a minor release.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-01
+
+### Fixed
+
+- `fade` left characters painted on screen in Safari when scrolling back up,
+  the more of them the faster the scroll. Safari does not reliably invalidate a
+  scroll-driven `opacity` animation across many small inline boxes: the computed
+  style reported the characters as gone while the pixels stayed. The mode now
+  hides with `visibility`, which is discrete anyway, given the `steps(1)` this
+  mode has always used, and leaves colour, `text-shadow` and
+  `background-clip: text` untouched. `rise` was never affected; it animates
+  `transform`.
+
+### Changed
+
+- The accessibility notes no longer claim that everything animated is
+  compositor-only. `visibility` is not, though being discrete it costs one paint
+  per character across the whole scroll rather than a value interpolated every
+  frame.
+- 728 B gzipped CSS, up from 715 B.
+
 ## [0.2.0] - 2026-09-01
 
 ### Added
@@ -78,7 +99,8 @@ First release.
   use `fade`.
 - Firefox does not ship `animation-timeline: view()` yet. See the README.
 
-[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/robin-gogolok/split-reveal/releases/tag/v0.1.0

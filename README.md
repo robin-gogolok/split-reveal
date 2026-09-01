@@ -230,7 +230,7 @@ A cascade layer that is registered late wins, and an `@import` after `tailwindcs
 
 - The split copy is `aria-hidden`. The untouched string sits beside it in a visually hidden span, so assistive technology reads sentences, never letters.
 - Under `prefers-reduced-motion: reduce` nothing animates at all: the copy renders as plain text.
-- Only `opacity` and `transform` are animated, both compositor-only. No `will-change`.
+- Only `transform` and `visibility` are animated. `transform` is compositor-only; `visibility` is discrete, so a character costs one paint across the whole scroll rather than a value interpolated every frame. No `will-change`.
 
 ## Browser support
 

@@ -92,6 +92,17 @@ where the last character lands.
 - **`clip-path`, not `overflow: hidden`, on `.split-word`.** An overflowing
   inline-block moves its baseline to the bottom margin edge and drops the word
   out of the line. Guarded by the `splitting does not move the copy` browser test.
+- **`fade` hides with `visibility`, not `opacity`.** Safari does not reliably
+  invalidate a scroll-driven opacity animation across many small inline boxes:
+  scrolling back up leaves characters painted that the computed style already
+  reports as gone, and it gets worse the faster the scroll. Ruled out as causes:
+  the character count (23 is enough), `display: inline` (`inline-block` fails
+  too), `steps()`, the fill mode, and forcing a layer with `will-change`,
+  `contain: paint` or `translateZ(0)`. `rise` is unaffected because it animates
+  `transform`. `color: transparent` also fixes it but breaks text with a shadow,
+  a stroke or `background-clip: text`. Guarded by the browser test `fade
+  switches characters without a partial state`, which fails if this returns to
+  opacity.
 - **Graphemes, not code points.** `Intl.Segmenter` keeps combining marks and flag
   emoji intact where `Array.from` would tear them apart.
 - **`rise` sets `white-space: nowrap` on the word**, so hyphenation is off for
