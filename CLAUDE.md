@@ -12,8 +12,8 @@ public repository. Keep it to architecture and commands.
 npm run build          # minify src/ CSS into dist/, then generate demo/index.html
 npm test               # unit + browser
 npm run test:unit      # node --test test/*.test.js
-npm run test:browser   # playwright; starts scripts/serve.js on :4173 itself
-npm run serve          # static server on :4173, serves the repo root
+npm run test:browser   # playwright; starts scripts/serve.js on :4517 itself
+npm run serve          # static server on :4517, serves the repo root
 ```
 
 Single tests:
