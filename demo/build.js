@@ -97,7 +97,14 @@ const html = `<!doctype html>
   .display { font-size: clamp(2rem, 6vw, 4rem); line-height: 1.02; letter-spacing: -0.025em; margin: 0; font-weight: 800; }
   .lede { font-size: clamp(1.15rem, 2.6vw, 1.6rem); line-height: 1.45; margin: 0; max-width: 22em; }
   .body { font-size: 1.05rem; margin: 0; max-width: 34em; }
-  footer { padding: 20vh 0 8vh; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); }
+  /* The tail is this tall on purpose. A view() timeline runs on geometry, so
+     the cover range of a block only completes once the block has travelled a
+     viewport past its own top edge, and at the document end the scroll runs
+     out first. The last section finishes at end + spread = 72% of cover, so
+     everything below it has to be taller than that share of the viewport or
+     its closing characters never arrive. Guarded by the browser test
+     "every block finishes by the end of the page". */
+  footer { padding: 70vh 0 8vh; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); }
   a { color: inherit; }
   .support {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

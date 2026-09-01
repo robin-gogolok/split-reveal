@@ -8,6 +8,20 @@ While the version is below `1.0.0` the API may still change in a minor release.
 
 ## [Unreleased]
 
+### Fixed
+
+- The demo's last section stopped a few characters short of revealed at the
+  bottom of the page. A `cover` range only completes once the element has
+  travelled a viewport past its own top edge, and the scroll ran out first.
+  The demo now carries a tail taller than `end + spread`, guarded by a browser
+  test that scrolls to the document end at three viewport heights.
+
+### Added
+
+- The README documents how much scroll room a block needs below it, which is
+  `end + spread` percent of the viewport height, and what happens when a block
+  sits at the very bottom of a page without it.
+
 ## [0.1.0] - 2026-09-01
 
 First release.

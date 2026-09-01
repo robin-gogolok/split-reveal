@@ -79,6 +79,34 @@ test.describe('scroll-linked reveal', () => {
     expect(Math.abs(delta.width)).toBeLessThan(0.5);
   });
 
+  test('every block finishes by the end of the page', async ({ page }) => {
+    // A cover range only completes once the element has travelled a viewport
+    // past its own top edge, and at the document end the scroll runs out
+    // first. The last block therefore needs more than `end + spread` percent
+    // of the viewport height below it, which is what the demo's tall tail is
+    // for. Without it the closing characters of the last section never arrive.
+    for (const height of [700, 900, 1200]) {
+      await page.setViewportSize({ width: 1280, height });
+      await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+        return new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        );
+      });
+
+      const unrevealed = await page.evaluate(() =>
+        [...document.querySelectorAll('.split-char')].filter((c) => {
+          const style = getComputedStyle(c);
+          const lifted =
+            style.transform !== 'none' && new DOMMatrix(style.transform).m42 > 0.5;
+          return Number(style.opacity) < 0.99 || lifted;
+        }).length,
+      );
+
+      expect(unrevealed, `unrevealed characters at ${height}px tall`).toBe(0);
+    }
+  });
+
   test('the page never scrolls sideways', async ({ page }) => {
     for (const width of [375, 768, 1440]) {
       await page.setViewportSize({ width, height: 800 });

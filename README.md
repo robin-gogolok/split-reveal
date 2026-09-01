@@ -104,6 +104,8 @@ const t = splitText('Scroll is the timeline.')
 | `end` | `34` | Range end of the **first** character, in percent of `cover` |
 | `spread` | `22` | Scroll distance between the first and the last character finishing, in percentage points of `cover` |
 
+The last character therefore lands at `end + spread` percent of `cover`, 56% by default. A block needs that much scroll left below it, which matters at the bottom of a page: see [A block needs scroll room below it](#a-block-needs-scroll-room-below-it).
+
 Returns a `SplitResult`:
 
 | Member | Type | |
@@ -184,11 +186,27 @@ import 'split-reveal/fallback'
 
 It is roughly 600 bytes and trades the scroll coupling for a fire-once `IntersectionObserver` transition: the reveal still reads left to right, but it plays on its own clock and does not run backwards. Different effect, similar look. It stays out of the bundle unless you ask for it.
 
-## Known limitation
+## Known limitations
+
+### Hyphenation is off for `rise`
 
 `rise` needs a box per character, because `transform` does not apply to non-replaced inline elements. Each of those boxes is also a line-break opportunity, which would let a long compound break mid-word with no hyphen, so the word wrapper carries `white-space: nowrap`.
 
 **Hyphenation is therefore off for `rise`.** A long German compound at hero size can run out of the line on narrow viewports. Check headline copy at 375px, or use `fade`, which stays fully inline and breaks exactly like untouched text.
+
+### A block needs scroll room below it
+
+`cover` starts when the element's top edge touches the bottom of the viewport and ends when its bottom edge leaves the top, so the range is `viewport height + element height` long. The last character lands at `end + spread` percent of it, 56% with the defaults.
+
+At the bottom of a page the scroll runs out before that. Once the end of the document sits on the bottom of the viewport nothing moves any further, so a block `H` tall with `B` of content below it, in a viewport `V` tall, only ever reaches:
+
+```
+(B + H) / (V + H)
+```
+
+of its cover range. For a block that is the last thing on the page that is a few percent, and the closing characters never arrive. Nothing errors; the text just sits there half revealed.
+
+Keep roughly `end + spread` percent of the viewport height below the block, so about 56vh with the defaults. An ordinary footer covers that. A headline as the last element on the page does not. Where the layout cannot give that room, lower `end` and `spread` for that block instead.
 
 ## How it compares
 

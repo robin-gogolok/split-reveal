@@ -71,6 +71,12 @@ to a delay would silently break the whole effect.
   emoji intact where `Array.from` would tear them apart.
 - **`rise` sets `white-space: nowrap` on the word**, so hyphenation is off for
   that mode. Check headline copy at 375px; use `fade` for body text.
+- **The demo's `70vh` footer padding.** A `cover` range only completes once the
+  element has travelled a viewport past its own top edge, and at the document
+  end the scroll runs out first. Everything below a block has to be taller than
+  `end + spread` percent of the viewport (72% for the last demo section) or its
+  closing characters never arrive. Guarded by the browser test
+  `every block finishes by the end of the page`.
 
 ### Generated and committed files
 
