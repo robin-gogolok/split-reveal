@@ -145,6 +145,19 @@ Raise both bleeds for display faces set below `line-height: 1`, where glyphs sit
 
 All rules live in an `@layer split-reveal` cascade layer, so your own unlayered CSS wins without needing `!important`.
 
+### Tailwind CSS v4
+
+Declare the layer order before the imports, or the library will outrank every utility:
+
+```css
+@layer theme, base, components, split-reveal, utilities;
+
+@import "tailwindcss";
+@import "split-reveal/css";
+```
+
+A cascade layer that is registered late wins, and an `@import` after `tailwindcss` registers `split-reveal` after `utilities`. With the order declared up front, `split-reveal` sits between `components` and `utilities`, which is where it belongs: your utilities still win, and you never reach for `!important`. The `@layer` statement has to come before any `@import` to take effect.
+
 ## Accessibility
 
 - The split copy is `aria-hidden`. The untouched string sits beside it in a visually hidden span, so assistive technology reads sentences, never letters.
