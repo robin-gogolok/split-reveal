@@ -84,6 +84,47 @@ const t = splitText('Scroll is the timeline.')
 </h1>
 ```
 
+### Without a build step
+
+A hand-written HTML page has nowhere to run the split, so run it in the browser
+instead. The animation is CSS either way. The module builds the markup once and
+then does nothing for the rest of the page's life.
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/split-reveal@0/dist/split-reveal.css">
+
+<h1 data-split>Scroll is the timeline.</h1>
+<p data-split="fade">Not a trigger that fires a clip.</p>
+
+<script type="module">
+  import { splitText } from 'https://cdn.jsdelivr.net/npm/split-reveal@0/+esm'
+
+  for (const el of document.querySelectorAll('[data-split]:not([data-split-reveal])')) {
+    const result = splitText(el.textContent.trim(), { mode: el.dataset.split || undefined })
+    el.setAttribute('data-split-reveal', result.attributes['data-split-reveal'])
+    el.style.cssText += result.attributes.style
+    el.innerHTML = result.toHTML()
+  }
+</script>
+```
+
+Two details there are load-bearing. `|| undefined` rather than `|| 'rise'`,
+because an empty `data-split` yields an empty string and `splitText` skips
+`undefined` options so the default applies. And `:not([data-split-reveal])`,
+because after the split `el.textContent` holds the sentence twice, once in the
+hidden copy for assistive technology and once in the split copy, so a second
+pass would split the doubled string.
+
+The cost is the property the top of this README claims: 1.3 kB gzipped over the
+CDN, and a moment where the plain text is on screen before it is replaced. Where
+the copy is static, generate the markup once instead and paste it into the page:
+
+```sh
+npx -y -p split-reveal node -e "import('split-reveal').then(m => console.log(m.splitText('Scroll is the timeline.').toElement('h1', { class: 'hero' })))"
+```
+
+That leaves nothing on the page but markup and the stylesheet.
+
 ## Modes
 
 | Mode | What it does | Use for |

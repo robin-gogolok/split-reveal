@@ -8,6 +8,15 @@ While the version is below `1.0.0` the API may still change in a minor release.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-01
+
+### Added
+
+- README section for pages with no build step at all. The split can run in the
+  browser off the CDN build, which trades the zero-JavaScript property for
+  needing no tooling, or the markup can be generated once and pasted into the
+  page, which keeps it. Nothing in the package changed.
+
 ## [0.1.0] - 2026-09-01
 
 First release.
@@ -50,5 +59,6 @@ First release.
   use `fade`.
 - Firefox does not ship `animation-timeline: view()` yet. See the README.
 
-[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/robin-gogolok/split-reveal/releases/tag/v0.1.0
