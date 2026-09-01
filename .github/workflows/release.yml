@@ -1,0 +1,29 @@
+name: Release
+
+# Publishes on a version tag. Needs an NPM_TOKEN secret (automation token) and
+# id-token: write, which is what lets npm attach a provenance attestation
+# linking the published tarball back to this workflow run.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:unit
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

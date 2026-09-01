@@ -1,0 +1,9 @@
+node_modules/
+dist/
+demo/index.html
+test-results/
+playwright-report/
+.DS_Store
+*.log
+demo/split-reveal.css
+*.tgz

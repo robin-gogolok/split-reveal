@@ -1,0 +1,61 @@
+{
+  "name": "split-reveal",
+  "version": "0.1.0",
+  "description": "Scroll-linked per-character text reveal in CSS. The split runs at build time, so nothing ships to the browser but markup and a stylesheet.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Robin Gogolok (https://robin-gogolok.de)",
+  "homepage": "https://robin-gogolok.github.io/split-reveal/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robin-gogolok/split-reveal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/robin-gogolok/split-reveal/issues"
+  },
+  "keywords": [
+    "scroll-driven-animations",
+    "animation-timeline",
+    "split-text",
+    "text-reveal",
+    "scroll-animation",
+    "css-animation",
+    "astro",
+    "zero-dependency"
+  ],
+  "exports": {
+    ".": "./src/split.js",
+    "./css": "./dist/split-reveal.css",
+    "./css/source": "./src/split-reveal.css",
+    "./fallback": "./src/fallback.js",
+    "./astro": "./integrations/astro/SplitReveal.astro",
+    "./package.json": "./package.json"
+  },
+  "main": "./src/split.js",
+  "files": [
+    "src",
+    "dist",
+    "integrations",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "./src/fallback.js",
+    "**/*.css"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node scripts/build-css.js && node demo/build.js",
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "node --test test/*.test.js",
+    "test:browser": "playwright test",
+    "serve": "node scripts/serve.js",
+    "prepublishOnly": "npm run build && npm run test:unit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "esbuild": "^0.25.0"
+  }
+}

@@ -1,0 +1,26 @@
+---
+/**
+ * Astro wrapper around split-reveal. The split runs while the page renders,
+ * so nothing ships to the browser but markup and CSS.
+ *
+ * Import the stylesheet once in your layout:
+ *   import 'split-reveal/css'
+ */
+import { splitText } from 'split-reveal';
+
+interface Props {
+  text: string;
+  mode?: 'rise' | 'fade';
+  as?: 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
+  class?: string;
+  start?: number;
+  end?: number;
+  spread?: number;
+}
+
+const { text, mode, as = 'span', class: className, start, end, spread } = Astro.props;
+
+const result = splitText(text, { mode, start, end, spread });
+const Tag = as;
+---
+<Tag class:list={[className]} {...result.attributes} set:html={result.toHTML()} />
