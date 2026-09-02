@@ -46,6 +46,33 @@ test.describe('scroll-linked reveal', () => {
     expect(late).toBeGreaterThan(mid);
   });
 
+  test('--split-ease shapes the travel, and a bad one costs only the easing', async ({ page }) => {
+    // The second half is why the character rule uses animation longhands. In
+    // the `animation` shorthand a `var()` that does not parse is invalid at
+    // computed-value time, which takes `both` down with it: every character
+    // then sits at its resting transform for the whole scroll and the block
+    // silently stops animating. Three control points rather than four is the
+    // typo that gets you there; a bare word would not, since the shorthand
+    // reads an unknown keyword as an animation-name and stays valid.
+    const eased = await page.evaluate(
+      () => getComputedStyle(document.querySelector('#step .split-char')).animationTimingFunction,
+    );
+    expect(eased).toBe('cubic-bezier(0.33, 0.67, 0.67, 1)');
+
+    await page.evaluate(() => {
+      const bad = 'cubic-bezier(.33,.67,.67)';
+      document.querySelector('#rise .display').style.setProperty('--split-ease', bad);
+    });
+    await scrollTo(page, '#rise .display', 0.9);
+    const broken = await page.evaluate(() => {
+      const style = getComputedStyle(document.querySelector('#rise .split-char'));
+      return { fill: style.animationFillMode, offset: new DOMMatrix(style.transform).m42 };
+    });
+
+    expect(broken.fill).toBe('both');
+    expect(broken.offset).toBeGreaterThan(0.5);
+  });
+
   test('fade switches characters without a partial state', async ({ page }) => {
     // Three things at once. Nothing may sit at a partial opacity, which is what
     // returning this mode to an opacity animation would reintroduce along with
@@ -133,6 +160,35 @@ test.describe('scroll-linked reveal', () => {
       expect(total, `characters found at ${height}px tall`).toBeGreaterThan(0);
       expect(unrevealed, `unrevealed characters at ${height}px tall`).toBe(0);
     }
+  });
+
+  test('the scroll-room formula in the README matches what the last character reaches', async ({ page }) => {
+    // `(B + h) / (V + h)`, with h the line height. The timeline sits on the
+    // character, so the block it is in contributes nothing to its range. The
+    // same figure computed with the block height comes out about a third too
+    // high, and the footer padding derived from it would be short.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const { measured, predicted, withBlockHeight } = await page.evaluate(async () => {
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+      const chars = [...document.querySelectorAll('#step .split-char')];
+      const last = chars[chars.length - 1];
+      const box = last.getBoundingClientRect();
+      const V = window.innerHeight;
+      const h = box.height;
+      const H = document.querySelector('#step [data-split-reveal]').getBoundingClientRect().height;
+      const B = document.documentElement.scrollHeight - (box.bottom + window.scrollY);
+      return {
+        measured: last.getAnimations()[0].timeline.currentTime.value,
+        predicted: (100 * (B + h)) / (V + h),
+        withBlockHeight: (100 * (B + H)) / (V + H),
+      };
+    });
+
+    expect(Math.abs(measured - predicted), 'character-height formula').toBeLessThan(1);
+    expect(Math.abs(measured - withBlockHeight), 'block-height formula').toBeGreaterThan(1);
   });
 
   test('the page never scrolls sideways', async ({ page }) => {

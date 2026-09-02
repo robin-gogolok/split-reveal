@@ -144,8 +144,9 @@ That leaves nothing on the page but markup and the stylesheet.
 | `start` | `8` | Range start of the **first** character, in percent of `cover` |
 | `end` | `34` | Range end of the **first** character, in percent of `cover` |
 | `spread` | `22` | Scroll distance between the first and the last character finishing, in percentage points of `cover` |
+| `step` | `null` | Scroll distance from one character to the next, written rather than derived. Replaces `spread`; passing both throws |
 
-The last character therefore lands at `end + spread` percent of `cover`, 56% by default. A block needs that much scroll left below it, which matters at the bottom of a page: see [A block needs scroll room below it](#a-block-needs-scroll-room-below-it).
+The last character therefore lands at `end + spread` percent of `cover`, 56% by default, or at `end + step * (count - 1)` where you set a `step`. A block needs that much scroll left below it, which matters at the bottom of a page: see [A block needs scroll room below it](#a-block-needs-scroll-room-below-it).
 
 Returns a `SplitResult`:
 
@@ -181,7 +182,8 @@ longestWord(splitText('Scroll is the timeline.').tokens)
 Exported types: `SplitMode`, `SplitOptions`, `SplitChar`, `SplitWordToken`,
 `SplitSpaceToken`, `SplitToken`, `SplitAttributes` and `ElementAttributes`,
 plus the `SplitResult` class. The Astro component's props extend
-`SplitOptions`, so `mode`, `start`, `end` and `spread` are typed there too.
+`SplitOptions`, so `mode`, `start`, `end`, `spread` and `step` are typed there
+too.
 
 ### Why `spread` and not a delay
 
@@ -197,6 +199,22 @@ animation-range:
 
 Reading order also holds at any scroll speed, which a fixed delay cannot promise.
 
+### `spread` or `step`
+
+The two describe the same stagger from opposite ends, and which one you want is a design decision rather than a default:
+
+| | `spread` | `step` |
+|---|---|---|
+| Held constant | the length of the whole run | the distance between two characters |
+| Grows with the copy | the density of the stagger | the length of the whole run |
+| Characters in flight at once | all of them, past ~60 characters | always `(end - start) / step` |
+
+`spread` is the default because it makes a page of blocks feel of a piece: every one of them takes the same share of its own scroll, whatever the copy says. It has one limit. The step it derives is `spread / (count - 1)`, so the longer the text the finer the step, and past roughly sixty characters every character in the block is moving at once. The wave stops reading as a wave and the paragraph blurs as a whole.
+
+`step` is the fix for that case. Writing `{ start: 8, end: 18, step: 0.25 }` keeps 40 characters in flight whether the block is a line or a paragraph, which is the narrow travelling front you see on sites that stagger with a tweening library. What you give up is the shared timing: a long block now takes far more scroll than a short one.
+
+Reach for `step` on long copy, and check `end + step * (count - 1)` against the scroll you have below the block.
+
 ## CSS custom properties
 
 Set these on the element, or anywhere above it.
@@ -205,11 +223,14 @@ Set these on the element, or anywhere above it.
 |---|---|---|
 | `--split-bleed-top` | `0.4em` | Headroom the mask leaves above the line box, for ascenders and umlaut dots |
 | `--split-bleed-bottom` | `0.25em` | Headroom below, for descenders |
+| `--split-ease` | `linear` | How one character travels its own range |
 | `--split-fallback-duration` | `500ms` | Fallback only |
 | `--split-fallback-stagger` | `14ms` | Fallback only |
 | `--split-fallback-ease` | `cubic-bezier(.16,1,.3,1)` | Fallback only |
 
 Raise both bleeds for display faces set below `line-height: 1`, where glyphs sit well outside the line box. Too much bleed costs nothing; too little shaves the tops off umlauts.
+
+`--split-ease` shapes one character's own travel, never the stagger: that stays a shift of the range and stays even. Linear is the default because it is the honest mapping of scroll to motion and the only curve that looks the same scrolled backwards. An ease-out reads softer and is what a tweening library applies without being asked, `cubic-bezier(.33,.67,.67,1)` being exactly the quadratic one. `fade` ignores the property, since a single step has nothing to interpolate.
 
 All rules live in an `@layer split-reveal` cascade layer, so your own unlayered CSS wins without needing `!important`.
 
@@ -262,17 +283,17 @@ It is roughly 600 bytes and trades the scroll coupling for a fire-once `Intersec
 
 ### A block needs scroll room below it
 
-`cover` starts when the element's top edge touches the bottom of the viewport and ends when its bottom edge leaves the top, so the range is `viewport height + element height` long. The last character lands at `end + spread` percent of it, 56% with the defaults.
+`animation-timeline: view()` sits on the characters, so every character is its own timeline subject. `cover` starts when that character's top edge touches the bottom of the viewport and ends when its bottom edge leaves the top, which makes the range `viewport height + line height` long. The height of the block it sits in never enters into it. The last character lands at `end + spread` percent of that range, 56% with the defaults.
 
-At the bottom of a page the scroll runs out before that. Once the end of the document sits on the bottom of the viewport nothing moves any further, so a block `H` tall with `B` of content below it, in a viewport `V` tall, only ever reaches:
+At the bottom of a page the scroll runs out before that. Once the end of the document sits on the bottom of the viewport nothing moves any further, so the last character of a block, with `B` of content below it, on a line `h` tall, in a viewport `V` tall, only ever reaches:
 
 ```
-(B + H) / (V + H)
+(B + h) / (V + h)
 ```
 
 of its cover range. For a block that is the last thing on the page that is a few percent, and the closing characters never arrive. Nothing errors; the text just sits there half revealed.
 
-Keep roughly `end + spread` percent of the viewport height below the block, so about 56vh with the defaults. An ordinary footer covers that. A headline as the last element on the page does not. Where the layout cannot give that room, lower `end` and `spread` for that block instead.
+Keep roughly `end + spread` percent of the viewport height below the block, so about 56vh with the defaults. Because `h` is small next to `V`, that figure holds whatever the block is: a one-line headline needs the same room as a ten-line paragraph. An ordinary footer covers it. A headline as the last element on the page does not. Where the layout cannot give that room, lower `end` and `spread` for that block instead.
 
 ## How it compares
 

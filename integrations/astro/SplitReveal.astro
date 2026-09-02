@@ -8,18 +8,19 @@
  */
 import { splitText, type SplitOptions } from 'split-reveal';
 
-// Extending SplitOptions rather than restating it: `mode`, `start`, `end` and
-// `spread` then follow the library's own type, so a new option cannot arrive
-// here as a silently untyped prop.
+// Extending SplitOptions rather than restating it: `mode`, `start`, `end`,
+// `spread` and `step` then follow the library's own type, so a new option
+// cannot arrive here as a silently untyped prop. Destructuring it below is the
+// half that is not enforced: a prop left out there is dropped in silence.
 interface Props extends SplitOptions {
   text: string;
   as?: 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
   class?: string;
 }
 
-const { text, mode, as = 'span', class: className, start, end, spread } = Astro.props;
+const { text, mode, as = 'span', class: className, start, end, spread, step } = Astro.props;
 
-const result = splitText(text, { mode, start, end, spread });
+const result = splitText(text, { mode, start, end, spread, step });
 const Tag = as;
 ---
 <Tag class:list={[className]} {...result.attributes} set:html={result.toHTML()} />

@@ -8,6 +8,43 @@ While the version is below `1.0.0` the API may still change in a minor release.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-03
+
+### Added
+
+- `step` option on `splitText`: the scroll distance from one character to the
+  next, written rather than derived from `spread`. `spread` divides a fixed run
+  by the character count, so the longer the copy the finer the step, and past
+  roughly sixty characters every character in the block is moving at once and
+  the wave blurs into the paragraph. `step` instead holds `(end - start) / step`
+  characters in flight whatever the length, at the cost of a run that grows with
+  the copy. The two describe the same stagger, so passing both throws rather
+  than honouring one in silence.
+- `--split-ease` custom property, the timing function of one character's own
+  travel. Default `linear`, so nothing moves differently than before. `fade`
+  ignores it: a single step has nothing to interpolate.
+
+### Changed
+
+- The per-character rule sets `animation-fill-mode` and
+  `animation-timing-function` as longhands rather than through the `animation`
+  shorthand. A `var()` that does not parse is invalid at computed-value time,
+  and in the shorthand that would drop `both` along with the easing, parking
+  every character at its resting position for the whole scroll.
+
+### Fixed
+
+- The scroll-room formula in the README was computed from the height of the
+  block, `(B + H) / (V + H)`. The timeline sits on the character, so the range
+  is `viewport height + line height` long and the block's height is not in it;
+  the figure is `(B + h) / (V + h)`, around a third lower for a multi-line
+  block. The rule of thumb it fed, `end + spread` percent of the viewport
+  height below the block, was right all along and is unchanged. It now also
+  reads as what it is: the same figure whatever the block's height, where the
+  old formula implied a tall block needed less room below it. Guarded by the
+  browser test `the scroll-room formula in the README matches what the last
+  character reaches`.
+
 ## [0.2.1] - 2026-09-01
 
 ### Fixed
@@ -99,7 +136,8 @@ First release.
   use `fade`.
 - Firefox does not ship `animation-timeline: view()` yet. See the README.
 
-[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.0...v0.1.1

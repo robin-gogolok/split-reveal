@@ -42,6 +42,17 @@ const sections = [
     note: 'spread is held constant while the per-character step is derived from it, so a short headline and a long paragraph finish over the same share of their own scroll.',
     html: block('p', 'body', 'The split happens while the page renders. Nothing measures the DOM at runtime, which is also why a resize, a rotation or a late font swap can never invalidate it: there is no measurement to invalidate.', { mode: 'fade', spread: 38 }),
   },
+  {
+    id: 'step',
+    label: 'mode: rise, step 0.25, eased',
+    note: 'The other trade. <code>step</code> writes the per-character distance instead of deriving it from <code>spread</code>, so the stagger keeps its density however long the copy gets: <code>(end - start) / step</code> characters are ever in flight, 40 here rather than all 127. <code>--split-ease</code> shapes that travel, here with the quadratic ease-out a tweening library would apply without being asked.',
+    // Set through the style attribute rather than a rule, which also keeps
+    // `toElement`'s style merging on the demo's exercised path.
+    html: splitText(
+      'A written step keeps the same handful of characters in flight from the first word to the last, so a long paragraph still reads as a wave running through it.',
+      { start: 8, end: 18, step: 0.25 },
+    ).toElement('p', { class: 'lede', style: '--split-ease:cubic-bezier(.33,.67,.67,1)' }),
+  },
 ];
 
 const html = `<!doctype html>

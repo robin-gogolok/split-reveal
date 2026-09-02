@@ -64,10 +64,29 @@ strings on both sides and drift silently:
 
 A `view()` timeline has no time, so `animation-delay` resolves every character to
 the same frame. Each character instead runs the same range, offset by
-`--split-i * --split-step`. `--split-step` is derived from `spread / (count - 1)`
+`--split-i * --split-step`.
+
+The timeline sits on `.split-char`, so each character is its own subject and its
+`cover` range is `viewport height + line height` long. The block's height is not
+in it. Two things follow that are easy to get wrong: a character always lands at
+the same height on screen whatever line it is on, which is what makes a
+paragraph read as one wave rather than as a stack of separate ones; and the
+scroll room a block needs below it does not grow with the block. Verified by
+measurement, not by reading the spec: `(B + h) / (V + h)` is the progress the
+last character reaches at the end of the document, with `h` the line height, and
+the same figure computed with the block height is wrong by a third. `--split-step` is derived from `spread / (count - 1)`
 in `splitText`, never hand-written, which is what keeps a short headline and a
 long paragraph finishing over the same share of their own scroll. Changing this
 to a delay would silently break the whole effect.
+
+The caller can write the step instead, with the `step` option, and the two are
+mutually exclusive on purpose: they describe the same stagger from opposite
+ends, so honouring one silently reads as "my spread does nothing". The trade is
+worth knowing before touching either default. A derived step gets finer as the
+copy grows, so past roughly sixty characters `(end - start) / step` exceeds the
+character count and the whole block is in flight at once, which is why long
+paragraphs blur where headlines snap. A written step keeps that number fixed
+and lets the run grow instead. Neither is the correct one.
 
 To debug a range, read the progress an element actually reaches:
 `document.querySelector('.split-char').getAnimations()[0].timeline.currentTime.value`
@@ -103,16 +122,27 @@ where the last character lands.
   a stroke or `background-clip: text`. Guarded by the browser test `fade
   switches characters without a partial state`, which fails if this returns to
   opacity.
+- **Animation longhands, not the `animation` shorthand, on `.split-char`.** The
+  timing function now comes from `var(--split-ease)`, and a `var()` that does
+  not parse is invalid at computed-value time. In the shorthand that takes
+  `both` down with it, so one mistyped ease would park every character at its
+  resting transform and kill the block silently. Guarded by the browser test
+  `--split-ease shapes the travel, and a bad one costs only the easing`. Its
+  bad value has three control points rather than four for a reason: a bare word
+  would not fail there, because the shorthand reads an unknown keyword as an
+  `animation-name` and stays valid.
 - **Graphemes, not code points.** `Intl.Segmenter` keeps combining marks and flag
   emoji intact where `Array.from` would tear them apart.
 - **`rise` sets `white-space: nowrap` on the word**, so hyphenation is off for
   that mode. Check headline copy at 375px; use `fade` for body text.
 - **The demo's `70vh` footer padding.** A `cover` range only completes once the
-  element has travelled a viewport past its own top edge, and at the document
+  character has travelled a viewport past its own top edge, and at the document
   end the scroll runs out first. Everything below a block has to be taller than
-  `end + spread` percent of the viewport (72% for the last demo section) or its
-  closing characters never arrive. Guarded by the browser test
-  `every block finishes by the end of the page`.
+  `end + spread` percent of the viewport, or its closing characters never
+  arrive. That is 50% for the last demo section, which writes a `step`; the
+  `spread: 38` section before it wants 72% and has the whole last section
+  below it to give. Guarded by the browser test `every block finishes by the
+  end of the page`.
 - **The README's CDN URLs pin `@0`, not an exact version.** The no-build section
   would otherwise need an edit in every release.
 

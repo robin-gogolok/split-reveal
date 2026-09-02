@@ -29,9 +29,20 @@ export type SplitOptions = {
      * Scroll distance between the first and the last
      * character finishing, in percentage points of `cover`. Held constant while the
      * per-character step is derived from it, so a six-word headline and a forty-word
-     * paragraph both complete over the same share of their own scroll.
+     * paragraph both complete over the same share of their own scroll. Ignored
+     * when `step` is set.
      */
     spread?: number;
+    /**
+     * Scroll distance from one character to the
+     * next, in percentage points of `cover`, written rather than derived. This is
+     * the opposite trade to `spread`: the stagger stays the same density in every
+     * block and the whole run grows with the copy instead. What it fixes is how
+     * many characters are ever moving at once, `(end - start) / step` of them, so
+     * the wave stays a wave in a long paragraph rather than smearing across all
+     * of it. Passing both this and `spread` throws.
+     */
+    step?: number | null;
 };
 export type SplitChar = {
     /**
@@ -72,7 +83,15 @@ export type ElementAttributes = Record<string, string | number | boolean | null 
  * @property {number} [spread=22] Scroll distance between the first and the last
  *   character finishing, in percentage points of `cover`. Held constant while the
  *   per-character step is derived from it, so a six-word headline and a forty-word
- *   paragraph both complete over the same share of their own scroll.
+ *   paragraph both complete over the same share of their own scroll. Ignored
+ *   when `step` is set.
+ * @property {number|null} [step=null] Scroll distance from one character to the
+ *   next, in percentage points of `cover`, written rather than derived. This is
+ *   the opposite trade to `spread`: the stagger stays the same density in every
+ *   block and the whole run grows with the copy instead. What it fixes is how
+ *   many characters are ever moving at once, `(end - start) / step` of them, so
+ *   the wave stays a wave in a long paragraph rather than smearing across all
+ *   of it. Passing both this and `spread` throws.
  */
 /**
  * @typedef {object} SplitChar

@@ -22,7 +22,15 @@
  * @property {number} [spread=22] Scroll distance between the first and the last
  *   character finishing, in percentage points of `cover`. Held constant while the
  *   per-character step is derived from it, so a six-word headline and a forty-word
- *   paragraph both complete over the same share of their own scroll.
+ *   paragraph both complete over the same share of their own scroll. Ignored
+ *   when `step` is set.
+ * @property {number|null} [step=null] Scroll distance from one character to the
+ *   next, in percentage points of `cover`, written rather than derived. This is
+ *   the opposite trade to `spread`: the stagger stays the same density in every
+ *   block and the whole run grows with the copy instead. What it fixes is how
+ *   many characters are ever moving at once, `(end - start) / step` of them, so
+ *   the wave stays a wave in a long paragraph rather than smearing across all
+ *   of it. Passing both this and `spread` throws.
  */
 
 /**
@@ -63,6 +71,10 @@ const DEFAULTS = Object.freeze({
   start: 8,
   end: 34,
   spread: 22,
+  // `null`, not a number: it means "derive the step from spread". A default
+  // here would silently be the third value describing a stagger that only has
+  // two degrees of freedom.
+  step: null,
 });
 
 const MODES = new Set(['rise', 'fade']);
@@ -141,10 +153,17 @@ export function splitText(text, options = {}) {
   for (const [key, value] of Object.entries(options)) {
     if (value !== undefined) /** @type {Record<string, unknown>} */ (config)[key] = value;
   }
-  const { mode, start, end, spread } = config;
+  const { mode, start, end, spread, step: fixedStep } = config;
 
   if (!MODES.has(mode)) {
     throw new RangeError(`split-reveal: unknown mode "${mode}", expected "rise" or "fade"`);
+  }
+
+  // Both describe the same stagger, so silently dropping one is the kind of
+  // bug that reads as "my spread does nothing". `null` is not "both": it is how
+  // a wrapper says it has no step, and the derivation below handles it.
+  if (options.spread !== undefined && options.step !== undefined && options.step !== null) {
+    throw new RangeError('split-reveal: pass either spread or step, not both');
   }
 
   // Whitespace is kept as its own token and rendered as a plain text node, so
@@ -164,7 +183,7 @@ export function splitText(text, options = {}) {
   );
 
   const count = index;
-  const step = spread / Math.max(count - 1, 1);
+  const step = fixedStep ?? spread / Math.max(count - 1, 1);
 
   return new SplitResult({ text, mode, tokens, count, start, end, step });
 }

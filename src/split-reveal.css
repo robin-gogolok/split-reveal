@@ -27,6 +27,16 @@
        line-height 1. */
     --split-bleed-top: 0.4em;
     --split-bleed-bottom: 0.25em;
+
+    /* How one character travels its own range, not how the run is staggered:
+       the stagger is a shift of the range and stays linear whatever this is.
+       Linear is the default because it is the honest mapping of scroll to
+       motion, and it is the only one that looks the same scrolled backwards.
+       An ease-out reads softer and is what a tweening library gives you
+       without being asked; `cubic-bezier(.33,.67,.67,1)` is exactly the
+       quadratic one. `fade` ignores this: a single step has nothing to
+       interpolate. */
+    --split-ease: linear;
   }
 
   /* Inline by default, so wherever the animation does not run, line breaking
@@ -62,7 +72,13 @@
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
       [data-split-reveal] .split-char {
-        animation: linear both;
+        /* Longhands, not the `animation` shorthand: the shorthand would have
+           to carry `var(--split-ease)`, and an unparseable value there is
+           invalid at computed-value time, which drops `both` with it and
+           leaves every character stuck at its resting position. A bad ease
+           should cost the easing, nothing else. */
+        animation-fill-mode: both;
+        animation-timing-function: var(--split-ease);
         animation-timeline: view();
         /* The stagger is a shift of the range, never a delay. A scroll
            timeline has no time, so forty delays would all resolve to the same

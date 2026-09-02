@@ -29,8 +29,12 @@ const wrapperStyle: string = attributes.style;
 const options: SplitOptions = { mode: 'fade', start: 8, end: 34, spread: 22 };
 splitText('…', options);
 
+// `step` replaces `spread`, and `null` is the way to say it is not set.
+splitText('…', { start: 8, end: 18, step: 0.25 });
+splitText('…', { spread: 22, step: null });
+
 // Framework wrappers pass every prop through, set or not.
-splitText('…', { mode: undefined, start: undefined });
+splitText('…', { mode: undefined, start: undefined, step: undefined });
 
 // Narrowing on `type` is the documented way through the token tree.
 for (const token of result.tokens satisfies SplitToken[]) {
@@ -49,6 +53,8 @@ installFallback();
 installFallback({ root: document.body });
 
 const defaultMode: SplitMode = defaults.mode;
+// No number default: `null` is what makes `spread` the one that applies.
+const defaultStep: number | null = defaults.step;
 // @ts-expect-error the defaults are frozen
 defaults.start = 12;
 
@@ -57,6 +63,9 @@ splitText('…', { mode: 'slide' });
 
 // @ts-expect-error the ranges are numbers, not CSS percentages
 splitText('…', { start: '8%' });
+
+// @ts-expect-error the step is percentage points too, not a CSS percentage
+splitText('…', { step: '0.25%' });
 
 // @ts-expect-error the text is required and has to be a string
 splitText(42);
