@@ -162,33 +162,45 @@ test.describe('scroll-linked reveal', () => {
     }
   });
 
-  test('the scroll-room formula in the README matches what the last character reaches', async ({ page }) => {
-    // `(B + h) / (V + h)`, with h the line height. The timeline sits on the
-    // character, so the block it is in contributes nothing to its range. The
-    // same figure computed with the block height comes out about a third too
-    // high, and the footer padding derived from it would be short.
+  test("a character's cover range is the viewport plus its own line, not its block", async ({
+    page,
+  }) => {
+    // What the README's `(B + h) / (V + h)` rests on. `animation-timeline:
+    // view()` sits on `.split-char`, so every character is its own timeline
+    // subject and the height of the block never enters its range. Measured as
+    // a slope, from how far the page scrolls while the progress moves a
+    // hundred points, because that is independent of where the range starts
+    // and of the rounding in scrollHeight.
     await page.setViewportSize({ width: 1280, height: 800 });
-    const { measured, predicted, withBlockHeight } = await page.evaluate(async () => {
-      window.scrollTo(0, document.documentElement.scrollHeight);
-      await new Promise((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(resolve)),
-      );
-      const chars = [...document.querySelectorAll('#step .split-char')];
-      const last = chars[chars.length - 1];
-      const box = last.getBoundingClientRect();
-      const V = window.innerHeight;
-      const h = box.height;
-      const H = document.querySelector('#step [data-split-reveal]').getBoundingClientRect().height;
-      const B = document.documentElement.scrollHeight - (box.bottom + window.scrollY);
+    const measured = await page.evaluate(async () => {
+      const settle = () =>
+        new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const char = document.querySelector('#step .split-char');
+      const timeline = char.getAnimations()[0].timeline;
+      const y = char.getBoundingClientRect().top + window.scrollY;
+
+      window.scrollTo(0, y - 700);
+      await settle();
+      const near = timeline.currentTime.value;
+      window.scrollTo(0, y - 500);
+      await settle();
+      const far = timeline.currentTime.value;
+
       return {
-        measured: last.getAnimations()[0].timeline.currentTime.value,
-        predicted: (100 * (B + h)) / (V + h),
-        withBlockHeight: (100 * (B + H)) / (V + H),
+        rangePx: 200 / ((far - near) / 100),
+        viewport: window.innerHeight,
+        charHeight: char.getBoundingClientRect().height,
+        blockHeight: document.querySelector('#step [data-split-reveal]').getBoundingClientRect()
+          .height,
       };
     });
 
-    expect(Math.abs(measured - predicted), 'character-height formula').toBeLessThan(1);
-    expect(Math.abs(measured - withBlockHeight), 'block-height formula').toBeGreaterThan(1);
+    // On one line the two candidates coincide and the rest asserts nothing.
+    expect(measured.blockHeight, 'the fixture spans more than one line').toBeGreaterThan(
+      measured.charHeight * 2,
+    );
+    expect(measured.rangePx).toBeGreaterThan(measured.viewport + measured.charHeight - 2);
+    expect(measured.rangePx).toBeLessThan(measured.viewport + measured.charHeight + 2);
   });
 
   test('the page never scrolls sideways', async ({ page }) => {
