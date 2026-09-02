@@ -131,8 +131,11 @@ That leaves nothing on the page but markup and the stylesheet.
 |---|---|---|
 | `rise` (default) | Masks the word with `clip-path` and lifts characters into it | Headlines |
 | `fade` | Steps characters in with `steps(1)`. No mask, stays fully inline | Body copy, ledes |
+| `nudge` | Hides with `visibility`, no mask, so the travel distance is yours to set | Short travel at any size |
 
 `fade` is stepped rather than faded on purpose. A real fade shows a cloud of half-transparent letters for the whole scroll range; a single step means a character is either set or absent, which stays legible while the page is moving.
+
+`nudge` exists because in `rise` the travel distance is not a setting. The character hides behind the word's mask, so it has to clear that mask's lower edge or a sliver of it stands in the line for the whole trip. That puts a floor under the distance at the glyph's own height, around 1.36em for a text face, and no combination of `line-height` and bleed gets below it: at 2.5rem that is a 67px trip per letter. `nudge` hides with `visibility` instead. The concealment no longer depends on where the character is, so the distance comes loose and `--split-travel` sets it, 0.25em by default. The mask goes with it; what stays is the box per character, and with it the lost hyphenation.
 
 ## API
 
@@ -140,7 +143,7 @@ That leaves nothing on the page but markup and the stylesheet.
 
 | Option | Default | Meaning |
 |---|---|---|
-| `mode` | `'rise'` | `'rise'` or `'fade'` |
+| `mode` | `'rise'` | `'rise'`, `'fade'` or `'nudge'` |
 | `start` | `8` | Range start of the **first** character, in percent of `cover` |
 | `end` | `34` | Range end of the **first** character, in percent of `cover` |
 | `spread` | `22` | Scroll distance between the first and the last character finishing, in percentage points of `cover` |
@@ -224,6 +227,7 @@ Set these on the element, or anywhere above it.
 | `--split-bleed-top` | `0.4em` | Headroom the mask leaves above the line box, for ascenders and umlaut dots |
 | `--split-bleed-bottom` | `0.25em` | Headroom below, for descenders |
 | `--split-ease` | `linear` | How one character travels its own range |
+| `--split-travel` | `0.25em` | How far a `nudge` character travels. Negative brings it down from above |
 | `--split-fallback-duration` | `500ms` | Fallback only |
 | `--split-fallback-stagger` | `14ms` | Fallback only |
 | `--split-fallback-ease` | `cubic-bezier(.16,1,.3,1)` | Fallback only |
@@ -275,11 +279,11 @@ It is roughly 600 bytes and trades the scroll coupling for a fire-once `Intersec
 
 ## Known limitations
 
-### Hyphenation is off for `rise`
+### Hyphenation is off for `rise` and `nudge`
 
 `rise` needs a box per character, because `transform` does not apply to non-replaced inline elements. Each of those boxes is also a line-break opportunity, which would let a long compound break mid-word with no hyphen, so the word wrapper carries `white-space: nowrap`.
 
-**Hyphenation is therefore off for `rise`.** A long German compound at hero size can run out of the line on narrow viewports. Check headline copy at 375px, or use `fade`, which stays fully inline and breaks exactly like untouched text.
+**Hyphenation is therefore off for `rise`**, and for `nudge`, which needs the same box. A long German compound at hero size can run out of the line on narrow viewports. Check headline copy at 375px, or use `fade`, which stays fully inline and breaks exactly like untouched text.
 
 ### A block needs scroll room below it
 

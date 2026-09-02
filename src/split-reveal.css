@@ -37,6 +37,17 @@
        quadratic one. `fade` ignores this: a single step has nothing to
        interpolate. */
     --split-ease: linear;
+
+    /* How far a `nudge` character travels, and the reason that mode exists.
+       In `rise` the distance is not a setting at all but a condition: the
+       character hides behind the word's mask, so it has to clear the mask's
+       lower edge or a sliver of it stands in the line for the whole trip.
+       That floor is the glyph's own height, around 1.36em for a text face,
+       and no combination of line-height and bleed gets under it. `nudge`
+       hides with `visibility` instead, which uncouples the concealment from
+       the geometry and leaves this free. Negative values bring the character
+       down from above. */
+    --split-travel: 0.25em;
   }
 
   /* Inline by default, so wherever the animation does not run, line breaking
@@ -52,6 +63,26 @@
        the glyph visible at rest. */
     from { transform: translateY(calc(100% + var(--split-bleed-bottom) + 1px)); }
     to   { transform: translateY(0); }
+  }
+
+  /* One keyframe set, not a second animation for the visibility. `visibility`
+     is not an ordinary discrete property: CSS gives it a rule of its own, so
+     interpolating from `hidden` to `visible` yields `visible` at every value
+     strictly between the ends rather than switching at the halfway point. The
+     character is therefore lit for its whole travel and dark before it, with
+     no steps(), no timing-function list and no keyframe at a token 0.01%.
+     Measured at 20.093% of a range starting at 20%, in Chromium and WebKit,
+     under linear, ease-in and ease-out alike. It is also why `fade` below has
+     to ask for `steps(1, end)` to stay hidden at all. */
+  @keyframes split-nudge {
+    from {
+      visibility: hidden;
+      transform: translateY(var(--split-travel));
+    }
+    to {
+      visibility: visible;
+      transform: translateY(0);
+    }
   }
 
   /* `visibility`, not `opacity`. Safari does not reliably invalidate a
@@ -94,18 +125,32 @@
          line-break opportunity, which would let a long compound break mid-word
          with no hyphen, so the word forbids breaking inside itself. The cost is
          that hyphenation is off for this mode. Check headline copy at 375px. */
-      [data-split-reveal="rise"] .split-char {
+      [data-split-reveal="rise"] .split-char,
+      [data-split-reveal="nudge"] .split-char {
         display: inline-block;
+      }
+
+      [data-split-reveal="rise"] .split-char {
         animation-name: split-rise;
+      }
+
+      /* Same box per character as `rise`, and the same cost: no hyphenation.
+         What it does not get is the word mask, which is the whole point. */
+      [data-split-reveal="nudge"] .split-char {
+        animation-name: split-nudge;
       }
 
       /* `clip-path` rather than `overflow: hidden`: an overflowing inline-block
          moves its baseline to the bottom margin edge, which visibly drops the
          word out of the line at tight line-heights. clip-path is purely visual,
          so the mask costs nothing in layout and can bleed past the box. */
-      [data-split-reveal="rise"] .split-word {
+      [data-split-reveal="rise"] .split-word,
+      [data-split-reveal="nudge"] .split-word {
         display: inline-block;
         white-space: nowrap;
+      }
+
+      [data-split-reveal="rise"] .split-word {
         clip-path: inset(
           calc(-1 * var(--split-bleed-top))
           -0.06em
@@ -144,15 +189,27 @@
     transform: translateY(calc(100% + var(--split-bleed-bottom) + 1px));
   }
 
-  html[data-split-fallback] [data-split-reveal="rise"] .split-word {
+  html[data-split-fallback] [data-split-reveal="rise"] .split-word,
+  html[data-split-fallback] [data-split-reveal="nudge"] .split-word {
     display: inline-block;
     white-space: nowrap;
+  }
+
+  html[data-split-fallback] [data-split-reveal="rise"] .split-word {
     clip-path: inset(
       calc(-1 * var(--split-bleed-top))
       -0.06em
       calc(-1 * var(--split-bleed-bottom))
       -0.06em
     );
+  }
+
+  /* opacity here, not visibility: this is a plain transition on its own clock,
+     not the scroll-driven animation the Safari repaint fault applies to. */
+  html[data-split-fallback] [data-split-reveal="nudge"] .split-char {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(var(--split-travel));
   }
 
   html[data-split-fallback] [data-split-reveal="fade"] .split-char {

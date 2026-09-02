@@ -85,6 +85,7 @@ describe('splitText', () => {
 
   test('carries the mode on the element', () => {
     assert.equal(splitText('x', { mode: 'fade' }).attributes['data-split-reveal'], 'fade');
+    assert.equal(splitText('x', { mode: 'nudge' }).attributes['data-split-reveal'], 'nudge');
     assert.equal(splitText('x').attributes['data-split-reveal'], 'rise');
   });
 
@@ -106,5 +107,7 @@ describe('splitText', () => {
   test('rejects unusable input instead of rendering something broken', () => {
     assert.throws(() => splitText(42), TypeError);
     assert.throws(() => splitText('x', { mode: 'slide' }), RangeError);
+    // The message lists what is on offer, so a new mode cannot go missing there.
+    assert.throws(() => splitText('x', { mode: 'slide' }), /"rise", "fade", "nudge"/);
   });
 });

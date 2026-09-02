@@ -10,11 +10,14 @@
  *
  * @module split-reveal
  */
-export type SplitMode = 'rise' | 'fade';
+export type SplitMode = 'rise' | 'fade' | 'nudge';
 export type SplitOptions = {
     /**
      * `rise` masks the word and lifts characters
      * into it. `fade` steps them in without a mask and stays fully inline.
+     * `nudge` hides with `visibility` rather than a mask, which frees the travel
+     * distance from the glyph height that `rise` is bound to; set it with
+     * `--split-travel`.
      */
     mode?: SplitMode;
     /**
@@ -73,11 +76,14 @@ export type SplitAttributes = {
     style: string;
 };
 export type ElementAttributes = Record<string, string | number | boolean | null | undefined>;
-/** @typedef {'rise' | 'fade'} SplitMode */
+/** @typedef {'rise' | 'fade' | 'nudge'} SplitMode */
 /**
  * @typedef {object} SplitOptions
  * @property {SplitMode} [mode='rise']  `rise` masks the word and lifts characters
  *   into it. `fade` steps them in without a mask and stays fully inline.
+ *   `nudge` hides with `visibility` rather than a mask, which frees the travel
+ *   distance from the glyph height that `rise` is bound to; set it with
+ *   `--split-travel`.
  * @property {number} [start=8]   Range start of the first character, in percent of `cover`.
  * @property {number} [end=34]    Range end of the first character, in percent of `cover`.
  * @property {number} [spread=22] Scroll distance between the first and the last

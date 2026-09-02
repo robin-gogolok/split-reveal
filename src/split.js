@@ -11,12 +11,15 @@
  * @module split-reveal
  */
 
-/** @typedef {'rise' | 'fade'} SplitMode */
+/** @typedef {'rise' | 'fade' | 'nudge'} SplitMode */
 
 /**
  * @typedef {object} SplitOptions
  * @property {SplitMode} [mode='rise']  `rise` masks the word and lifts characters
  *   into it. `fade` steps them in without a mask and stays fully inline.
+ *   `nudge` hides with `visibility` rather than a mask, which frees the travel
+ *   distance from the glyph height that `rise` is bound to; set it with
+ *   `--split-travel`.
  * @property {number} [start=8]   Range start of the first character, in percent of `cover`.
  * @property {number} [end=34]    Range end of the first character, in percent of `cover`.
  * @property {number} [spread=22] Scroll distance between the first and the last
@@ -77,7 +80,7 @@ const DEFAULTS = Object.freeze({
   step: null,
 });
 
-const MODES = new Set(['rise', 'fade']);
+const MODES = new Set(['rise', 'fade', 'nudge']);
 
 // Grapheme clusters, not code points: `Array.from` would tear "é" written as
 // e + combining acute in half, and split a flag emoji into two invisible
@@ -156,7 +159,9 @@ export function splitText(text, options = {}) {
   const { mode, start, end, spread, step: fixedStep } = config;
 
   if (!MODES.has(mode)) {
-    throw new RangeError(`split-reveal: unknown mode "${mode}", expected "rise" or "fade"`);
+    throw new RangeError(
+      `split-reveal: unknown mode "${mode}", expected one of ${[...MODES].map((m) => `"${m}"`).join(', ')}`,
+    );
   }
 
   // Both describe the same stagger, so silently dropping one is the kind of

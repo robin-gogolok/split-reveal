@@ -27,6 +27,8 @@ const wrapperMode: SplitMode = attributes['data-split-reveal'];
 const wrapperStyle: string = attributes.style;
 
 const options: SplitOptions = { mode: 'fade', start: 8, end: 34, spread: 22 };
+const nudged: SplitMode = 'nudge';
+splitText('…', { mode: nudged });
 splitText('…', options);
 
 // `step` replaces `spread`, and `null` is the way to say it is not set.

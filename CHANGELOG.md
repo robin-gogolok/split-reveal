@@ -8,6 +8,21 @@ While the version is below `1.0.0` the API may still change in a minor release.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-03
+
+### Added
+
+- `nudge` mode, where the distance a character travels is a setting rather than
+  a consequence. In `rise` it is neither: the character hides behind the word's
+  mask, so it has to clear that mask's lower edge, which floors the travel at
+  the glyph's own height, around 1.36em, or 67px at a 2.5rem headline. No
+  combination of `line-height` and bleed gets under it. `nudge` hides with
+  `visibility` instead, which uncouples the concealment from the geometry, and
+  `--split-travel` then sets the distance, 0.25em by default; a negative value
+  brings the character down from above. It keeps the box per character that
+  `rise` needs for `transform`, so hyphenation is off in this mode too.
+- `--split-travel` custom property, read by `nudge` only.
+
 ## [0.3.0] - 2026-09-03
 
 ### Added
@@ -136,7 +151,8 @@ First release.
   use `fade`.
 - Firefox does not ship `animation-timeline: view()` yet. See the README.
 
-[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/robin-gogolok/split-reveal/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/robin-gogolok/split-reveal/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/robin-gogolok/split-reveal/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/robin-gogolok/split-reveal/compare/v0.1.1...v0.2.0

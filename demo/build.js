@@ -31,6 +31,15 @@ const sections = [
     html: block('h2', 'display', 'Every character runs the same length of scroll, offset by its own index.'),
   },
   {
+    id: 'nudge',
+    label: 'mode: nudge, --split-travel: 0.3em',
+    note: 'Hides with <code>visibility</code> instead of a mask, which is what frees the distance. In <code>rise</code> above, the travel is not a setting but a condition: the character has to clear the word mask or a sliver of it stands in the line the whole way, and that floors it at the glyph\u2019s own height, about 1.36em. Here it is 0.3em. Same box per character as <code>rise</code>, so hyphenation is off in this mode too.',
+    html: splitText('The distance is a setting, not a condition.', { mode: 'nudge' }).toElement(
+      'h2',
+      { class: 'display', style: '--split-travel:0.3em' },
+    ),
+  },
+  {
     id: 'fade',
     label: 'mode: fade',
     note: 'Stepped, not faded: a character is either set or absent, never half transparent. Stays fully inline, so hyphenation and line breaking are untouched.',
@@ -111,9 +120,11 @@ const html = `<!doctype html>
   /* The tail is this tall on purpose. A view() timeline runs on geometry, so
      the cover range of a block only completes once the block has travelled a
      viewport past its own top edge, and at the document end the scroll runs
-     out first. The last section finishes at end + spread = 72% of cover, so
-     everything below it has to be taller than that share of the viewport or
-     its closing characters never arrive. Guarded by the browser test
+     out first. The last section writes a step and finishes at
+     end + step * (count - 1) = 50% of cover, so everything below it has to be
+     taller than that share of the viewport or its closing characters never
+     arrive. The fade section above it wants 72% and has this whole tail plus
+     the last section to give. Guarded by the browser test
      "every block finishes by the end of the page". */
   footer { padding: 70vh 0 8vh; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); }
   a { color: inherit; }

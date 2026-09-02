@@ -104,6 +104,45 @@ test.describe('scroll-linked reveal', () => {
     expect(sawPartway, 'a scroll position with the reveal part-way through').toBe(true);
   });
 
+  test('nudge travels the distance it is given, lit for the whole trip', async ({ page }) => {
+    // The two things `rise` cannot do. There the distance is a visibility
+    // condition rather than a setting: the character has to clear the word
+    // mask, which floors the travel at the glyph's own height. And the second
+    // half is the part that would quietly kill the mode: if the character only
+    // lit up at the end of its range it would travel unseen and arrive from
+    // nowhere. `visibility` interpolates to `visible` at every value strictly
+    // between the ends, which is what lights it from the first frame.
+    const travelPx = await page.evaluate(() => {
+      const char = document.querySelector('#nudge .split-char');
+      window.scrollTo(0, 0);
+      return {
+        offset: new DOMMatrix(getComputedStyle(char).transform).m42,
+        fontSize: parseFloat(getComputedStyle(char).fontSize),
+        lineBox: char.getBoundingClientRect().height,
+        visibility: getComputedStyle(char).visibility,
+      };
+    });
+
+    expect(travelPx.visibility, 'dark before its range').toBe('hidden');
+    expect(travelPx.offset / travelPx.fontSize).toBeCloseTo(0.3, 2);
+    // The point of the mode: under what `rise` is forced into by the mask.
+    expect(travelPx.offset).toBeLessThan(travelPx.lineBox / 3);
+
+    let sawTravelling = false;
+    for (const fraction of [0.85, 0.7, 0.55, 0.4, 0.25]) {
+      await scrollTo(page, '#nudge .display', fraction);
+      const travelling = await page.evaluate(
+        () =>
+          [...document.querySelectorAll('#nudge .split-char')].filter((c) => {
+            const style = getComputedStyle(c);
+            return style.visibility === 'visible' && new DOMMatrix(style.transform).m42 > 0.5;
+          }).length,
+      );
+      if (travelling > 0) sawTravelling = true;
+    }
+    expect(sawTravelling, 'a character lit and still on its way').toBe(true);
+  });
+
   test('splitting does not move the copy', async ({ page }) => {
     // clip-path masks visually; overflow:hidden would drop the inline-block's
     // baseline and change the box. This is the regression guard for that.
